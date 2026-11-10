@@ -1,0 +1,16 @@
+LỊCH MỘT NGÀY - WEB APP CHO ĐIỆN THOẠI
+
+Thư mục này là một web app hoàn chỉnh: có biểu tượng, chạy toàn màn hình và dùng được khi không có mạng sau lần mở đầu tiên.
+
+BƯỚC 1. Đưa thư mục lên một nơi lưu web có HTTPS
+Chọn một dịch vụ miễn phí, ví dụ Netlify, GitHub Pages hoặc Cloudflare Pages, rồi tải cả thư mục này lên. Khi xong chị sẽ có một link dạng https://...
+(Phải là link https thì điện thoại mới cho cài như app.)
+
+BƯỚC 2. Thêm vào màn hình chính
+- iPhone/iPad: mở link bằng Safari, bấm nút Chia sẻ, chọn "Thêm vào Màn hình chính".
+- Android: mở link bằng Chrome, bấm menu 3 chấm, chọn "Cài đặt ứng dụng" hoặc "Thêm vào màn hình chính".
+
+GHI CHÚ
+- Các ô "Đã xong" lưu ngay trong điện thoại của chị, mỗi ngày tự bắt đầu lại.
+- App chưa có thông báo nhắc giờ.
+- Muốn đổi giờ hoặc nội dung: sửa mảng SLOTS trong file index.html, rồi tải lại lên và đổi V = "lich-mot-ngay-v1" trong sw.js thành v2 để điện thoại nhận bản mới.

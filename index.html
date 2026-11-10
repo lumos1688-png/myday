@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1a2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lịch ngày">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,sans-serif}
+[hidden]{display:none!important}
+img{max-width:100%}
+</style>
+<title>Lịch Một Ngày</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: một cột dọc, thẻ lớn thoáng, gom theo Sáng / Chiều / Tối, mở từng thẻ để xem việc chi tiết. */
+:root{
+  --font:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --bg:#f1f4f9; --card:#ffffff; --fg:#16202e; --muted:#566377; --line:#d9e0ea;
+  --on-strong:#14202e; --chip:#e6ebf3;
+  --s:#b36b00; --s-soft:#fff4dc; --s-strong:#ffd98f;
+  --c:#08808f; --c-soft:#e2f5f8; --c-strong:#9fe1ea;
+  --t:#6444d1; --t-soft:#eee9fd; --t-strong:#cabcf6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1a2b; --card:#16253b; --fg:#e8eef7; --muted:#9fb0c8; --line:#27374f;
+    --on-strong:#ffffff; --chip:#1f3049;
+    --s:#ffb43a; --s-soft:#2c2311; --s-strong:#9a640d;
+    --c:#2ec4d6; --c-soft:#0f2f36; --c-strong:#137684;
+    --t:#a98cff; --t-soft:#241d44; --t-strong:#5b3fb8;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1a2b; --card:#16253b; --fg:#e8eef7; --muted:#9fb0c8; --line:#27374f;
+  --on-strong:#ffffff; --chip:#1f3049;
+  --s:#ffb43a; --s-soft:#2c2311; --s-strong:#9a640d;
+  --c:#2ec4d6; --c-soft:#0f2f36; --c-strong:#137684;
+  --t:#a98cff; --t-soft:#241d44; --t-strong:#5b3fb8;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.55;
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin:0 auto;min-width:0}
+h1{font-size:28px;line-height:1.2;margin:0 0 4px;font-weight:700;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+.chip{font:inherit;font-size:14px;font-weight:600;border:1.5px solid var(--line);background:var(--card);color:var(--fg);
+  border-radius:999px;padding:8px 14px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip:focus-visible,summary:focus-visible,.tool:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.tool{margin-left:auto;font:inherit;font-size:14px;font-weight:600;background:none;border:0;color:var(--muted);cursor:pointer;text-decoration:underline;padding:8px 4px}
+.prog{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:6px 0 22px}
+.prog-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:14px;color:var(--muted);margin-bottom:10px}
+#progTxt{font-weight:600;color:var(--fg)}
+.track{height:8px;border-radius:99px;background:var(--chip);overflow:hidden}
+.fill{height:100%;width:0;background:var(--c);border-radius:99px;transition:width .3s}
+.legend{font-size:13px;color:var(--muted);margin:0 0 26px}
+.group{margin-bottom:34px}
+.group h2{display:flex;align-items:baseline;gap:10px;font-size:20px;margin:0 0 14px;font-weight:700}
+.group h2 span{font-size:14px;font-weight:500;color:var(--muted)}
+.group[data-p="s"]{--p:var(--s);--ps:var(--s-soft);--pg:var(--s-strong)}
+.group[data-p="c"]{--p:var(--c);--ps:var(--c-soft);--pg:var(--c-strong)}
+.group[data-p="t"]{--p:var(--t);--ps:var(--t-soft);--pg:var(--t-strong)}
+.group h2::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--p);align-self:center}
+.list{display:flex;flex-direction:column;gap:14px}
+details.slot{background:var(--ps);border-left:6px solid var(--p);border-radius:14px;overflow:hidden}
+details.slot.k1{background:var(--pg);color:var(--on-strong);box-shadow:0 6px 18px rgba(0,0,0,.16)}
+details.slot.k2{background:color-mix(in srgb,var(--pg) 50%,var(--ps))}
+details.slot.k4{opacity:.8}
+details.slot.k5{opacity:.6}
+details.slot.done{opacity:.5}
+body.focus details.slot:not(.cur){opacity:.3;filter:saturate(.35)}
+body.focus details.slot:not(.cur):hover{opacity:.65}
+details.slot.cur{opacity:1;filter:none;background:var(--pg);color:var(--on-strong);box-shadow:0 0 0 3px var(--p),0 12px 30px rgba(0,0,0,.28)}
+.cur .body li::before{background:var(--on-strong)}
+.cur .ttl{font-weight:700;font-size:18px}
+.tool+.tool{margin-left:0}
+.dur{display:block;font-weight:500;font-size:13px;opacity:.78;margin-top:3px}
+summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:62px 34px 1fr 24px;align-items:center;gap:10px;padding:16px 14px 16px 14px}
+summary::-webkit-details-marker{display:none}
+.time{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;line-height:1.2}
+.time small{display:block;font-weight:500;font-size:13px;opacity:.75}
+.ico{font-size:26px;text-align:center;line-height:1}
+.ttl{font-weight:600;font-size:17px;line-height:1.3;min-width:0;overflow-wrap:anywhere}
+.k1 .ttl{font-weight:700;font-size:18px}
+.now{display:inline-block;margin-left:8px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--fg);color:var(--bg);vertical-align:middle}
+.chev{justify-self:end;transition:transform .2s;opacity:.7}
+details[open] .chev{transform:rotate(180deg)}
+.body{padding:2px 18px 18px 18px}
+.body ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.body li{position:relative;padding-left:22px;line-height:1.6}
+.body li::before{content:"";position:absolute;left:2px;top:.62em;width:8px;height:8px;border-radius:50%;background:var(--p)}
+.k1 .body li::before{background:var(--on-strong)}
+.donebox{display:flex;gap:10px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in srgb,currentColor 18%,transparent);font-size:15px;font-weight:600;cursor:pointer}
+.donebox input{width:22px;height:22px;accent-color:var(--p)}
+h2.sec{font-size:20px;margin:40px 0 14px}
+.week{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.day h3{margin:0 0 10px;font-size:17px}
+.day dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:15px}
+.day dt{color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.day dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.src{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:15px}
+.src ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+.src a{color:var(--c);font-weight:600}
+.note{color:var(--muted);font-size:14px;margin-top:14px}
+@media (max-width:420px){
+  summary{grid-template-columns:54px 30px 1fr 20px;gap:8px;padding:14px 12px}
+  .time{font-size:16px} .ico{font-size:24px} .ttl,.k1 .ttl{font-size:16px}
+  .body{padding:2px 14px 16px}
+}
+@media (prefers-reduced-motion:reduce){.chev,.fill{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Lịch một ngày, 06:30 đến 22:30</h1>
+  <p class="sub">Bấm vào từng thẻ để xem việc cần làm. Thẻ càng đậm càng quan trọng.</p>
+
+  <div class="bar" role="group" aria-label="Lọc theo buổi">
+    <button class="chip" data-f="all" aria-pressed="true">Tất cả</button>
+    <button class="chip" data-f="s" aria-pressed="false"><i style="background:var(--s)"></i>Sáng</button>
+    <button class="chip" data-f="c" aria-pressed="false"><i style="background:var(--c)"></i>Chiều</button>
+    <button class="chip" data-f="t" aria-pressed="false"><i style="background:var(--t)"></i>Tối</button>
+    <button class="tool" id="focusBtn" type="button">Hiện rõ tất cả</button>
+    <button class="tool" id="toggleAll" type="button">Mở tất cả</button>
+  </div>
+
+  <div class="prog">
+    <div class="prog-top"><span id="progTxt">Đã xong 0 / 17 khung</span><span id="nowTxt"></span></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <div id="groups"></div>
+
+  <h2 class="sec">Lịch xoay vòng trong tuần</h2>
+  <div class="week" id="week"></div>
+
+  <h2 class="sec">Nguồn chính thức</h2>
+  <div class="src">
+    <ul>
+      <li><a href="https://www.scrumguides.org/scrum-guide.html" target="_blank" rel="noopener">Scrum Guide 2020</a>: 5 sự kiện, 3 trách nhiệm, 3 artifact; Daily Scrum tối đa 15 phút.</li>
+      <li><a href="https://www.pmi.org/acp" target="_blank" rel="noopener">PMI-ACP (PMI)</a>: 4 nhóm nội dung thi, gồm Mindset 28%, Leadership 25%, Product 19%, Delivery 28%.</li>
+      <li><a href="https://jlpt.jp/sp/e/about/points.html" target="_blank" rel="noopener">JLPT (jlpt.jp)</a>: 5 cấp N1 đến N5; bài thi gồm từ vựng và ngữ pháp, đọc, nghe; không thi nói và viết.</li>
+      <li><a href="https://www.chinesetest.cn/hsk" target="_blank" rel="noopener">HSK (CTI)</a>: hiện 6 cấp, hướng tới khung 9 cấp; trang không nêu ngày áp dụng, xem lịch thi mới nhất tại đây.</li>
+    </ul>
+    <p class="note">Số lượng từ, số hồ sơ và thời lượng trong lịch là gợi ý của kế hoạch, không phải số liệu chính thức. Điều kiện kiếm tiền trên từng nền tảng cần đọc ở trang hỗ trợ của nền tảng đó.</p>
+  </div>
+</div>
+
+<script>
+const SLOTS=[
+{s:'06:30',e:'07:00',ic:'🌅',t:'Thức dậy',p:'s',k:4,b:[
+ 'Uống 1 ly nước, ra ban công hoặc sân 10 phút lấy ánh sáng tự nhiên, chưa cầm điện thoại.',
+ 'Giãn cơ cổ, vai, lưng 5 phút.',
+ 'Dọn giường, mở cửa sổ, bật đèn sáng chỗ học.',
+ 'Chưa mở TikTok hay tin nhắn, chỉ xem giờ.']},
+{s:'07:00',e:'07:45',ic:'🍳',t:'Ăn sáng và chọn 3 việc chính',p:'s',k:4,b:[
+ 'Ăn sáng có đạm (trứng, đậu, sữa chua), ăn xong mới mở máy.',
+ 'Viết vào sổ 3 việc chính của ngày, ít nhất 1 việc gắn với phỏng vấn PM hoặc tìm việc.',
+ 'So lịch: có hẹn phỏng vấn, deadline hay video phải đăng hôm nay không.',
+ 'Ước lượng thời gian từng việc và đánh dấu việc nào có thể bỏ nếu chậm.']},
+{s:'07:45',e:'08:30',ic:'🇨🇳',t:'Từ vựng tiếng Trung',p:'s',k:3,b:[
+ 'Mở bộ thẻ ghi nhớ cách quãng (Anki hoặc tương đương), ôn hết thẻ đến hạn trước rồi mới học thẻ mới.',
+ 'Học khoảng 10 đến 15 từ mới ở mức nâng cao, ưu tiên từ có thể dùng trong video TikTok.',
+ 'Đặt 3 câu với từ mới, đọc to và thu âm bằng điện thoại để nghe lại.',
+ 'Chọn 1 đến 2 từ hay nhất làm ý tưởng cho video ngắn.',
+ 'Ghi từ khó vào sổ lỗi để ôn lại lúc 20:00.']},
+{s:'08:30',e:'10:00',ic:'📋',t:'Quản lý dự án (PM IT/Agile)',p:'s',k:1,b:[
+ '08:30 đến 08:40: xem sổ lỗi hôm qua và chọn 1 chủ đề của ngày theo mục Lịch xoay vòng bên dưới.',
+ 'Đọc một phần của Scrum Guide 2020 (5 sự kiện, 3 trách nhiệm, 3 artifact), viết lại bằng lời của chị, không chép nguyên văn.',
+ 'Làm bài tập thực hành: viết Product Backlog, Product Goal và Sprint Goal cho một dự án thật, ví dụ kênh TikTok hoặc một ứng dụng nhỏ.',
+ '09:20 đến 10:00: luyện 2 câu hỏi phỏng vấn hành vi theo khung STAR (tình huống, nhiệm vụ, hành động, kết quả), trả lời to và thu âm để nghe lại.',
+ 'Cuối khối viết tóm tắt 5 dòng: hôm nay hiểu thêm gì, còn mơ hồ chỗ nào.']},
+{s:'10:00',e:'10:15',ic:'🚶',t:'Nghỉ giữa giờ',p:'s',k:5,b:[
+ 'Đứng dậy, đi lại trong nhà, uống nước.',
+ 'Nhìn ra xa hoặc ra cửa sổ khoảng 1 phút để mắt nghỉ.',
+ 'Không mở mạng xã hội, không nhắn tin.']},
+{s:'10:15',e:'11:45',ic:'🤖',t:'Học AI Claude',p:'s',k:1,b:[
+ '10:15 đến 10:25: chọn 1 dự án thật để làm trong buổi, ví dụ viết lại CV theo mô tả công việc PM, soạn kịch bản TikTok, hay lập kế hoạch dự án giả định.',
+ 'Luyện viết prompt có đủ vai trò, bối cảnh, yêu cầu và định dạng đầu ra; thử 2 đến 3 phiên bản và so sánh kết quả.',
+ 'Nhờ Claude đóng vai nhà tuyển dụng, hỏi 5 câu về Agile/Scrum rồi nhận xét câu trả lời của chị.',
+ 'Hoàn thành 1 sản phẩm cụ thể trong buổi (bộ câu trả lời phỏng vấn, 5 kịch bản video hoặc một bản CV) và lưu lại.',
+ 'Cuối khối lưu các prompt hiệu quả vào thư viện prompt riêng để dùng lại.']},
+{s:'11:45',e:'12:30',ic:'💼',t:'Tìm việc remote, kiếm tiền online',p:'s',k:2,b:[
+ 'Mở bảng theo dõi gồm: công ty, vị trí, link, ngày nộp, trạng thái; ưu tiên nộp 2 đến 3 hồ sơ phù hợp mỗi ngày thay vì nộp ồ ạt.',
+ 'Tìm trên LinkedIn và các trang việc làm remote với từ khóa Project Manager, Scrum Master, Agile, IT; lọc theo múi giờ và yêu cầu ngôn ngữ, coi tiếng Trung, Nhật, Anh là lợi thế.',
+ 'Chỉnh CV và thư xin việc theo từng mô tả công việc; dùng Claude để so khớp từ khóa nhưng tự kiểm tra lại mọi con số và thông tin.',
+ 'Nhắn 1 người trong ngành (kết nối LinkedIn, cựu đồng nghiệp) để hỏi về vị trí hoặc xin giới thiệu.',
+ 'Mỗi tuần dành 1 buổi nghiên cứu cách kiếm tiền online từ kênh (dạy hoặc dịch tiếng Trung, sản phẩm số, liên kết); điều kiện từng nền tảng cần đọc trên trang hỗ trợ chính thức của nó.']},
+{s:'12:30',e:'13:30',ic:'🍜',t:'Ăn trưa và nghỉ',p:'c',k:5,b:[
+ 'Ăn ở chỗ khác bàn làm việc, không xem màn hình khi ăn.',
+ 'Đi bộ nhẹ 5 đến 10 phút sau ăn cho dễ tiêu.',
+ 'Không đọc tin tức hay lướt TikTok, để đầu óc nghỉ.']},
+{s:'13:30',e:'14:00',ic:'😴',t:'Ngủ ngắn',p:'c',k:5,b:[
+ 'Đặt báo thức 20 phút, nằm ở nơi tối và yên tĩnh.',
+ 'Không ngủ quá 30 phút để tránh dậy nặng đầu.',
+ 'Nếu không ngủ được, vẫn nằm nhắm mắt, nghe nhạc nhẹ không lời.']},
+{s:'14:00',e:'15:00',ic:'🌏',t:'Tiếng Nhật hoặc tiếng Anh (luân phiên)',p:'c',k:3,b:[
+ 'Ngày chẵn, tiếng Nhật: học hiragana rồi katakana, mỗi ngày vài hàng, viết tay và đọc to; xong bảng chữ thì học theo một giáo trình nhập môn, chọn 1 bộ và đi hết.',
+ 'Ngày chẵn: nghe audio của giáo trình 10 phút, nhại lại từng câu, học 10 từ mới và đặt 3 câu.',
+ 'Ngày lẻ, tiếng Anh: xem 1 video ngắn về Scrum/Agile bằng tiếng Anh, ghi 5 cụm từ hay dùng trong họp dự án.',
+ 'Ngày lẻ: nói hoặc viết 3 câu trả lời phỏng vấn bằng tiếng Anh, nhờ Claude sửa lỗi và giải thích.',
+ 'Mỗi tuần kiểm tra nội dung và lịch thi trên trang chính thức jlpt.jp trước khi đặt mục tiêu thi N5 hoặc N4.']},
+{s:'15:00',e:'17:00',ic:'🎬',t:'Nội dung TikTok',p:'c',k:1,b:[
+ '15:00 đến 15:20: xem phân tích kênh, tìm video nào giữ người xem tốt nhất và chọn 1 dạng nội dung đang hiệu quả để làm tiếp.',
+ '15:20 đến 16:00: viết kịch bản 2 đến 3 video ngắn, mở đầu thật nhanh, mỗi video chỉ 1 ý, dùng từ vựng đã học lúc 07:45.',
+ '16:00 đến 16:40: quay một lượt các video cùng bối cảnh và ánh sáng để tiết kiệm thời gian.',
+ '16:40 đến 17:00: dựng, thêm phụ đề tiếng Trung kèm pinyin và nghĩa tiếng Việt, đặt tiêu đề và hashtag.',
+ 'Lưu video vào thư mục chờ đăng để đăng lúc 19:15 và các ngày sau.']},
+{s:'17:15',e:'18:15',ic:'🏃',t:'Đi bộ 1 giờ',p:'c',k:3,b:[
+ 'Đi nhanh vừa phải, đủ thở nhưng vẫn nói chuyện được; chọn đường quen và an toàn, mang giày thoải mái.',
+ 'Nghe podcast tiếng Trung, Nhật hoặc Anh, hoặc không nghe gì để đầu óc thoáng.',
+ '10 phút cuối đi chậm lại để hạ nhịp tim.',
+ 'Ghi ý tưởng video mới bằng ghi âm, không lướt mạng.']},
+{s:'18:15',e:'19:15',ic:'🍽️',t:'Tắm và ăn tối',p:'t',k:4,b:[
+ 'Tắm rửa, thay đồ thoải mái.',
+ 'Ăn tối nhẹ, nhiều rau, ăn xong cách giờ ngủ ít nhất 3 tiếng.',
+ 'Không làm việc hay xem màn hình khi ăn.']},
+{s:'19:15',e:'20:00',ic:'📱',t:'Đăng TikTok, trả lời bình luận',p:'t',k:2,b:[
+ 'Đăng 1 video đã dựng sẵn, viết mô tả và hashtag, đặt một câu hỏi để người xem bình luận.',
+ 'Trả lời bình luận trong 30 đến 45 phút đầu để người xem thấy kênh có người phản hồi.',
+ 'Ghi số liệu cơ bản của video hôm trước: lượt xem, thời gian xem, lượt lưu; xem analytics để biết giờ nào người xem đông rồi chỉnh giờ đăng.',
+ 'Trả lời tin nhắn hợp tác hoặc khách hàng (nếu có) và ghi vào sổ.']},
+{s:'20:00',e:'21:00',ic:'📖',t:'Ôn tiếng Trung (HSK 5–6)',p:'t',k:3,b:[
+ '20:00 đến 20:10: xem lại sổ lỗi từ 07:45, ôn các từ và lỗi hay sai.',
+ '20:10 đến 20:30: luyện nghe một bài dài (tin tức, podcast) rồi tóm tắt miệng 3 câu.',
+ '20:30 đến 20:45: đọc một bài báo ngắn, gạch từ lạ, đoán nghĩa rồi mới tra.',
+ '20:45 đến 21:00: viết một đoạn 100 đến 150 chữ về chủ đề video sắp làm và đọc to lên.',
+ 'Nếu đang ôn thi, dùng đề mẫu và đại cương chính thức trên chinesetest.cn thay vì tài liệu không rõ nguồn.']},
+{s:'21:00',e:'21:45',ic:'📝',t:'Tổng kết ngày',p:'t',k:4,b:[
+ 'Mở sổ, đánh dấu 3 việc chính đã xong chưa; việc dở chuyển sang mai hoặc bỏ.',
+ 'Ghi 3 dòng: học được gì, vướng ở đâu, số liệu (số hồ sơ nộp, số video đăng).',
+ 'Soạn trước 3 việc chính cho ngày mai và để sẵn tài liệu cần mở.',
+ 'Giảm đèn sáng, cắm sạc điện thoại xa giường.']},
+{s:'21:45',e:'22:30',ic:'🌙',t:'Thư giãn và ngủ',p:'t',k:5,b:[
+ 'Đọc sách giấy 20 đến 30 phút, chọn sách nhẹ chứ không phải tài liệu học.',
+ 'Tắt màn hình, tránh tin nhắn công việc.',
+ 'Thở chậm hoặc giãn cơ nhẹ 5 phút.',
+ 'Lên giường đúng 22:30 để thức dậy 06:30 với khoảng 8 tiếng trên giường.']}
+];
+const WEEK=[
+['Thứ Hai','Scrum Guide 2020: Sprint, Sprint Planning, Daily Scrum','Soạn mẫu Product Backlog cho một dự án giả định','Video mẹo từ vựng HSK cao cấp'],
+['Thứ Ba','Sprint Review, Sprint Retrospective, 3 trách nhiệm (Developers, Product Owner, Scrum Master)','Mô phỏng buổi Retrospective và viết biên bản','Video ngữ pháp dễ nhầm'],
+['Thứ Tư','3 artifact và cam kết: Product Goal, Sprint Goal, Definition of Done','Viết Sprint Goal và Definition of Done cho dự án thật','Video chuyện đời sống dùng tiếng Trung'],
+['Thứ Năm','Đọc đề cương kỳ thi PMI-ACP trên pmi.org để biết 4 nhóm kiến thức','Lập bản đồ ôn tập từng nhóm','Video kể chuyện hoặc vlog học tiếng'],
+['Thứ Sáu','Phỏng vấn thử theo khung STAR','Claude đóng nhà tuyển dụng, chị trả lời to','Video dạng hỏi đáp với người xem'],
+['Thứ Bảy','Làm backlog và roadmap cho chính kênh TikTok','Xuất sản phẩm: 1 trang portfolio dự án','Quay dự trữ video cho tuần sau'],
+['Chủ Nhật','Nghỉ nhẹ, ôn lại sổ lỗi của cả tuần','Tổng kết tuần và chọn mục tiêu tuần sau','Xem analytics cả tuần, không quay']
+];
+const GROUPS=[['s','Sáng','06:30 – 12:30'],['c','Chiều','12:30 – 18:15'],['t','Tối','18:15 – 22:30']];
+const $=s=>document.querySelector(s);
+const mins=h=>{const [a,b]=h.split(':').map(Number);return a*60+b};
+const dur=x=>{const m=mins(x.e)-mins(x.s),h=Math.floor(m/60),r=m%60;return h?(r?h+'h'+String(r).padStart(2,'0'):h+'h'):m+' phút'};
+let done={};
+const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Saigon'}).format(new Date());
+const KEY='lich-mot-ngay-'+today;
+try{done=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){done={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(done))}catch(e){}}
+function nowMin(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Saigon',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+  return Number(p.find(x=>x.type==='hour').value)%24*60+Number(p.find(x=>x.type==='minute').value)}
+let cur=-1,foc=0,focusOn=true;
+function render(){
+  const n=nowMin();
+  cur=SLOTS.findIndex(x=>mins(x.s)<=n&&n<mins(x.e));
+  foc=cur>=0?cur:(()=>{const j=SLOTS.findIndex(x=>mins(x.s)>n);return j>=0?j:(n<mins(SLOTS[0].s)?0:SLOTS.length-1)})();
+  $('#groups').innerHTML=GROUPS.map(([p,name,rng])=>{
+    const items=SLOTS.map((x,i)=>[x,i]).filter(([x])=>x.p===p).map(([x,i])=>`
+    <details class="slot k${x.k}${done[i]?' done':''}${i===foc?' cur':''}" data-i="${i}"${i===foc?' open':''}>
+      <summary>
+        <span class="time">${x.s}<small>${x.e}</small></span>
+        <span class="ico" aria-hidden="true">${x.ic}</span>
+        <span class="ttl">${x.t}${i===foc?`<span class="now">${i===cur?'Đang diễn ra':'Sắp tới'}</span>`:''}<small class="dur">Độ dài: ${dur(x)}</small></span>
+        <span class="chev" aria-hidden="true">▾</span>
+      </summary>
+      <div class="body">
+        <ul>${x.b.map(b=>`<li>${b}</li>`).join('')}</ul>
+        <label class="donebox"><input type="checkbox" data-d="${i}"${done[i]?' checked':''}>Đã xong khung này</label>
+      </div>
+    </details>`).join('');
+    return `<section class="group" data-p="${p}"><h2>${name}<span>${rng}</span></h2><div class="list">${items}</div></section>`}).join('');
+  $('#week').innerHTML=WEEK.map(d=>`<div class="day"><h3>${d[0]}</h3><dl>
+    <dt>08:30</dt><dd>${d[1]}</dd><dt>10:15</dt><dd>${d[2]}</dd><dt>15:00</dt><dd>${d[3]}</dd></dl></div>`).join('');
+  $('#nowTxt').textContent=(cur>=0?'Bây giờ: ':'Tiếp theo: ')+SLOTS[foc].t;
+  document.body.classList.toggle('focus',focusOn);
+  $('#focusBtn').textContent=focusOn?'Hiện rõ tất cả':'Chỉ tô khung hiện tại';
+  progress();
+}
+function progress(){
+  const c=Object.values(done).filter(Boolean).length;
+  $('#progTxt').textContent=`Đã xong ${c} / ${SLOTS.length} khung`;
+  $('#fill').style.width=(c/SLOTS.length*100)+'%';
+}
+document.addEventListener('change',e=>{
+  const i=e.target.dataset&&e.target.dataset.d; if(i===undefined)return;
+  done[i]=e.target.checked; save();
+  e.target.closest('details').classList.toggle('done',e.target.checked); progress();
+});
+document.querySelectorAll('.chip[data-f]').forEach(b=>b.addEventListener('click',()=>{
+  const f=b.dataset.f;
+  document.querySelectorAll('.chip[data-f]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  document.querySelectorAll('.group').forEach(g=>{g.hidden=!(f==='all'||g.dataset.p===f)});
+}));
+$('#toggleAll').addEventListener('click',e=>{
+  const all=[...document.querySelectorAll('details.slot')];
+  const open=all.some(d=>!d.open);
+  all.forEach(d=>d.open=open);
+  e.target.textContent=open?'Thu gọn tất cả':'Mở tất cả';
+});
+$('#focusBtn').addEventListener('click',()=>{
+  focusOn=!focusOn;
+  document.body.classList.toggle('focus',focusOn);
+  $('#focusBtn').textContent=focusOn?'Hiện rõ tất cả':'Chỉ tô khung hiện tại';
+  if(focusOn){document.querySelectorAll('details.slot').forEach(d=>{d.open=d.classList.contains('cur')});$('#toggleAll').textContent='Mở tất cả'}
+});
+setInterval(()=>{const n=nowMin();const c=SLOTS.findIndex(x=>mins(x.s)<=n&&n<mins(x.e));if(focusOn&&c!==cur){render()}},60000);
+render();
+try{document.querySelector('details.cur').scrollIntoView({block:'center'})}catch(e){}
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+
+</body>
+</html>
