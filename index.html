@@ -85,6 +85,8 @@ details.slot.cur{opacity:1;filter:none;background:var(--pg);color:var(--on-stron
 .cur .body li::before{background:var(--on-strong)}
 .cur .ttl{font-weight:700;font-size:18px}
 .tool+.tool{margin-left:0}
+#alertBox{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:9;background:var(--fg);color:var(--bg);border-radius:14px;padding:14px 16px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center;justify-content:space-between}
+#alertBox button{font:inherit;font-weight:700;background:var(--bg);color:var(--fg);border:0;border-radius:999px;padding:8px 14px;cursor:pointer}
 .dur{display:block;font-weight:500;font-size:13px;opacity:.78;margin-top:3px}
 summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:62px 34px 1fr 24px;align-items:center;gap:10px;padding:16px 14px 16px 14px}
 summary::-webkit-details-marker{display:none}
@@ -133,6 +135,7 @@ h2.sec{font-size:20px;margin:40px 0 14px}
     <button class="chip" data-f="s" aria-pressed="false"><i style="background:var(--s)"></i>Sáng</button>
     <button class="chip" data-f="c" aria-pressed="false"><i style="background:var(--c)"></i>Chiều</button>
     <button class="chip" data-f="t" aria-pressed="false"><i style="background:var(--t)"></i>Tối</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="false">🔕 Bật chuông</button>
     <button class="tool" id="focusBtn" type="button">Hiện rõ tất cả</button>
     <button class="tool" id="toggleAll" type="button">Mở tất cả</button>
   </div>
@@ -327,6 +330,46 @@ $('#focusBtn').addEventListener('click',()=>{
 setInterval(()=>{const n=nowMin();const c=SLOTS.findIndex(x=>mins(x.s)<=n&&n<mins(x.e));if(focusOn&&c!==cur){render()}},60000);
 render();
 try{document.querySelector('details.cur').scrollIntoView({block:'center'})}catch(e){}
+
+/* Chuông hết giờ: chỉ kêu khi app đang mở (iOS không cho web chạy nền). */
+let soundOn=false,actx=null;
+try{soundOn=localStorage.getItem('lich-sound')==='1'}catch(e){}
+function audioCtx(){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;if(!actx)actx=new C();if(actx.state!=='running')actx.resume();return actx}
+function chime(){
+  const a=audioCtx();if(!a)return;
+  [0,.45,.9].forEach(d=>[880,1175].forEach((f,k)=>{
+    const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+d+k*.12;
+    o.type='sine';o.frequency.value=f;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.35,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+.7);
+    o.connect(g).connect(a.destination);o.start(t);o.stop(t+.75);
+  }));
+  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+}
+function soundUI(){const b=$('#soundBtn');b.textContent=soundOn?'🔔 Chuông: bật':'🔕 Bật chuông';b.setAttribute('aria-pressed',soundOn)}
+$('#soundBtn').addEventListener('click',()=>{
+  soundOn=!soundOn;try{localStorage.setItem('lich-sound',soundOn?'1':'0')}catch(e){}
+  if(soundOn)chime();soundUI();
+});
+function showAlert(t){
+  let b=$('#alertBox');if(b)b.remove();
+  b=document.createElement('div');b.id='alertBox';b.setAttribute('role','alert');
+  b.innerHTML='<span>⏰ Hết giờ: '+t+'</span><button type="button">Đóng</button>';
+  b.querySelector('button').onclick=()=>b.remove();
+  document.body.appendChild(b);setTimeout(()=>b.remove(),60000);
+}
+let lastEnd=nowMin();
+function checkEnd(){
+  const n=nowMin();
+  if(n<lastEnd){lastEnd=n;return}
+  if(n>lastEnd&&soundOn){
+    const hit=SLOTS.filter(x=>{const e=mins(x.e);return e>lastEnd&&e<=n&&n-e<=5});
+    if(hit.length){chime();showAlert(hit[hit.length-1].t)}
+  }
+  lastEnd=n;
+}
+setInterval(checkEnd,5000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkEnd()});
+soundUI();
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
 </script>
