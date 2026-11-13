@@ -116,6 +116,31 @@ h2.sec{font-size:20px;margin:40px 0 14px}
 .src ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
 .src a{color:var(--c);font-weight:600}
 .note{color:var(--muted);font-size:14px;margin-top:14px}
+.pri{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 30px}
+.pri h2{font-size:20px;margin:0 0 12px}
+.pri form{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.pri input[type=text]{grid-column:1/-1}
+.pri input[type=text],.pri select{font:inherit;font-size:15px;color:var(--fg);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.pri button.add{font:inherit;font-weight:700;background:var(--fg);color:var(--bg);border:0;border-radius:10px;padding:10px 14px;cursor:pointer}
+.pri input:focus-visible,.pri select:focus-visible,.pri button:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.pd{margin-top:18px}
+.pd h3{font-size:16px;margin:0 0 8px;display:flex;justify-content:space-between;gap:8px}
+.pd h3 small{font-weight:500;color:var(--muted);font-size:13px}
+.pd ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pt{display:grid;grid-template-columns:22px auto 1fr auto auto;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-left:5px solid var(--muted);border-radius:10px;padding:10px 12px}
+.pt.p1{border-left-color:#d64545}.pt.p2{border-left-color:var(--s)}.pt.p3{border-left-color:var(--c)}
+.pt input{width:20px;height:20px;accent-color:var(--c)}
+.pt .tm{font-weight:700;font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap}
+.pt .tx{min-width:0;overflow-wrap:anywhere}
+.pt .bd{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.pt .x{font:inherit;background:none;border:0;color:var(--muted);cursor:pointer;padding:4px 6px;font-size:16px}
+.pt.over{border-style:dashed}
+.pt.fin .tx{text-decoration:line-through;color:var(--muted)}
+.pempty{color:var(--muted);font-size:14px;margin:0}
+.pdone summary{display:block;padding:0;font-size:14px;color:var(--muted);font-weight:600;margin-top:16px}
+.pdone ul{margin-top:8px}
+.tag{display:inline-block;margin-left:8px;font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--fg);color:var(--bg)}
+@media (max-width:480px){.pri form{grid-template-columns:1fr 1fr}.pt{grid-template-columns:22px 1fr auto;}.pt .tm{grid-column:2/4}.pt .tx{grid-column:2/3}.pt .bd{grid-column:3/4}}
 @media (max-width:420px){
   summary{grid-template-columns:54px 30px 1fr 20px;gap:8px;padding:14px 12px}
   .time{font-size:16px} .ico{font-size:24px} .ttl,.k1 .ttl{font-size:16px}
@@ -144,6 +169,18 @@ h2.sec{font-size:20px;margin:40px 0 14px}
     <div class="prog-top"><span id="progTxt">Đã xong 0 / 17 khung</span><span id="nowTxt"></span></div>
     <div class="track"><div class="fill" id="fill"></div></div>
   </div>
+
+  <section class="pri" aria-labelledby="priH">
+    <h2 id="priH">Việc ưu tiên</h2>
+    <form id="priForm" autocomplete="off">
+      <input type="text" id="priText" placeholder="Nhập việc cần làm, ví dụ: Nộp hồ sơ công ty A" aria-label="Tên việc" maxlength="120" required>
+      <select id="priDay" aria-label="Ngày"><option value="0">Hôm nay</option><option value="1">Ngày mai</option></select>
+      <select id="priLvl" aria-label="Mức ưu tiên"><option value="1">Ưu tiên cao</option><option value="2" selected>Vừa</option><option value="3">Thấp</option></select>
+      <select id="priMin" aria-label="Thời lượng"><option value="15">15 phút</option><option value="30" selected>30 phút</option><option value="45">45 phút</option><option value="60">1 giờ</option><option value="90">1h30</option><option value="120">2 giờ</option></select>
+      <button class="add" type="submit">+ Thêm</button>
+    </form>
+    <div id="priPlan"></div>
+  </section>
 
   <div id="groups"></div>
 
@@ -299,6 +336,7 @@ function render(){
   document.body.classList.toggle('focus',focusOn);
   $('#focusBtn').textContent=focusOn?'Hiện rõ tất cả':'Chỉ tô khung hiện tại';
   progress();
+  if(window.planReady)tagOverlap();
 }
 function progress(){
   const c=Object.values(done).filter(Boolean).length;
@@ -370,6 +408,76 @@ function checkEnd(){
 setInterval(checkEnd,5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkEnd()});
 soundUI();
+
+/* Việc ưu tiên: nhập việc, tự xếp giờ vào khoảng trống (không đè bữa ăn, ngủ, nghỉ, đi bộ, tổng kết). */
+const FIXED=[0,1,4,7,8,11,12,15,16];
+const LV={1:'Cao',2:'Vừa',3:'Thấp'};
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const tomorrow=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Saigon'}).format(new Date(new Date(today+'T00:00:00+07:00').getTime()+864e5));
+let tasks=[];
+try{tasks=JSON.parse(localStorage.getItem('lich-tasks')||'[]')}catch(e){tasks=[]}
+function saveTasks(){try{localStorage.setItem('lich-tasks',JSON.stringify(tasks))}catch(e){}}
+const eff=t=>t.date<today?today:t.date;
+function schedule(date){
+  const list=tasks.filter(t=>!t.done&&eff(t)===date).sort((a,b)=>a.p-b.p||a.id-b.id);
+  let c=6*60+30;const end=22*60+30;
+  if(date===today)c=Math.max(c,Math.ceil(nowMin()/5)*5);
+  const wins=[];
+  FIXED.map(i=>[mins(SLOTS[i].s),mins(SLOTS[i].e)]).sort((a,b)=>a[0]-b[0]).forEach(([a,b])=>{if(b<=c)return;if(a>c)wins.push([c,a]);c=Math.max(c,b)});
+  if(c<end)wins.push([c,end]);
+  const out=[];
+  list.forEach(t=>{
+    const w=wins.find(w=>w[1]-w[0]>=t.m);
+    if(w){out.push({t,a:w[0],b:w[0]+t.m});w[0]+=t.m+5}else out.push({t,over:true});
+  });
+  return out;
+}
+function rowHtml(r){
+  const t=r.t;
+  return `<li class="pt p${t.p}${r.over?' over':''}"><input type="checkbox" data-t="${t.id}" aria-label="Đã xong"><span class="tm">${r.over?'Hết chỗ':hm(r.a)+'–'+hm(r.b)}</span><span class="tx">${esc(t.x)}</span><span class="bd">${LV[t.p]} · ${t.m}p</span><button class="x" type="button" data-x="${t.id}" aria-label="Xoá việc">✕</button></li>`;
+}
+function renderPlan(){
+  const days=[[today,'Hôm nay'],[tomorrow,'Ngày mai']];
+  let h='';
+  days.forEach(([d,name])=>{
+    const sc=schedule(d);
+    h+=`<div class="pd"><h3>${name}<small>${sc.length?sc.length+' việc':''}</small></h3>`+(sc.length?`<ul>${sc.map(rowHtml).join('')}</ul>`:'<p class="pempty">Chưa có việc nào.</p>')+'</div>';
+  });
+  const fin=tasks.filter(t=>t.done);
+  if(fin.length)h+=`<details class="pdone"><summary>Đã xong (${fin.length}) · <button class="tool" type="button" id="clearDone" style="margin:0;padding:0">Dọn</button></summary><ul>${fin.map(t=>`<li class="pt fin p${t.p}"><input type="checkbox" data-t="${t.id}" checked aria-label="Bỏ đánh dấu xong"><span class="tx" style="grid-column:2/5">${esc(t.x)}</span><button class="x" type="button" data-x="${t.id}" aria-label="Xoá việc">✕</button></li>`).join('')}</ul></details>`;
+  $('#priPlan').innerHTML=h;
+  tagOverlap();
+}
+function tagOverlap(){
+  const iv=schedule(today).filter(r=>!r.over);
+  document.querySelectorAll('details.slot').forEach(d=>{
+    const i=+d.dataset.i,x=SLOTS[i];
+    const hit=!done[i]&&!FIXED.includes(i)&&iv.some(r=>r.a<mins(x.e)&&r.b>mins(x.s));
+    let g=d.querySelector('.tag');
+    if(hit&&!g){g=document.createElement('span');g.className='tag';g.textContent='Có việc ưu tiên chen vào';d.querySelector('.dur').after(g)}
+    else if(!hit&&g)g.remove();
+  });
+}
+$('#priForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const x=$('#priText').value.trim();if(!x)return;
+  tasks.push({id:Date.now(),x,date:$('#priDay').value==='1'?tomorrow:today,p:+$('#priLvl').value,m:+$('#priMin').value,done:false});
+  saveTasks();$('#priText').value='';renderPlan();$('#priText').focus();
+});
+$('#priPlan').addEventListener('click',e=>{
+  const x=e.target.closest('[data-x]');
+  if(x){tasks=tasks.filter(t=>t.id!==+x.dataset.x);saveTasks();renderPlan();return}
+  if(e.target.id==='clearDone'){e.preventDefault();tasks=tasks.filter(t=>!t.done);saveTasks();renderPlan()}
+});
+$('#priPlan').addEventListener('change',e=>{
+  const id=e.target.dataset&&e.target.dataset.t;if(!id)return;
+  const t=tasks.find(t=>t.id===+id);if(t){t.done=e.target.checked;saveTasks();renderPlan()}
+});
+document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.d!==undefined)tagOverlap()});
+setInterval(renderPlan,60000);
+window.planReady=true;
+renderPlan();
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
 </script>
