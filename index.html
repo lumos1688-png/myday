@@ -153,7 +153,7 @@ h2.sec{font-size:20px;margin:40px 0 14px}
 
 <div class="wrap">
   <h1>Lịch một ngày, 06:30 đến 22:30</h1>
-  <p class="sub">Bấm vào từng thẻ để xem việc cần làm. Thẻ càng đậm càng quan trọng.</p>
+  <p class="sub">Bấm vào từng thẻ để xem việc cần làm. Thẻ càng đậm càng quan trọng. Thứ Hai đến thứ Sáu: nhịp đều; thứ Bảy và Chủ Nhật: tăng ngoại ngữ (từ vựng tiếng Trung, tiếng Nhật và Anh, ôn HSK), giảm quản lý dự án, học Claude, tìm việc.</p>
 
   <div class="bar" role="group" aria-label="Lọc theo buổi">
     <button class="chip" data-f="all" aria-pressed="true">Tất cả</button>
@@ -200,7 +200,7 @@ h2.sec{font-size:20px;margin:40px 0 14px}
 </div>
 
 <script>
-const SLOTS=[
+const SLOTS_WD=[
 {s:'06:30',e:'07:00',ic:'🌅',t:'Thức dậy',p:'s',k:4,b:[
  'Uống 1 ly nước, ra ban công hoặc sân 10 phút lấy ánh sáng tự nhiên, chưa cầm điện thoại.',
  'Giãn cơ cổ, vai, lưng 5 phút.',
@@ -290,6 +290,57 @@ const SLOTS=[
  'Thở chậm hoặc giãn cơ nhẹ 5 phút.',
  'Lên giường đúng 22:30 để thức dậy 06:30 với khoảng 8 tiếng trên giường.']}
 ];
+/* Cuối tuần (T7, CN): tăng ngoại ngữ (từ vựng Trung, Nhật + Anh, ôn HSK), giảm PM, Claude, tìm việc, tổng kết. Tổng vẫn 06:30–22:30. */
+const WE={
+1:{e:'07:30'},
+2:{s:'07:30',e:'08:30',b:[
+ 'Mở bộ thẻ ghi nhớ cách quãng, ôn hết thẻ đến hạn trước rồi mới học thẻ mới.',
+ 'Học khoảng 20 từ mới ở mức nâng cao, ưu tiên từ có thể dùng trong video TikTok.',
+ 'Đặt 5 câu với từ mới, đọc to và thu âm bằng điện thoại để nghe lại.',
+ 'Chọn 1 đến 2 từ hay nhất làm ý tưởng cho video ngắn.',
+ 'Ghi từ khó vào sổ lỗi để ôn lại lúc 20:00.']},
+3:{s:'08:30',e:'09:45',b:[
+ '08:30 đến 08:40: xem sổ lỗi hôm qua và chọn 1 chủ đề theo mục Lịch xoay vòng bên dưới.',
+ 'Đọc một phần của Scrum Guide 2020, viết lại bằng lời của chị, không chép nguyên văn.',
+ 'Làm bài tập thực hành ngắn: backlog, Product Goal hoặc Sprint Goal cho một dự án thật.',
+ '09:25 đến 09:45: luyện 1 câu hỏi phỏng vấn theo khung STAR, trả lời to.',
+ 'Cuối khối viết tóm tắt 3 dòng: hôm nay hiểu thêm gì, còn mơ hồ chỗ nào.']},
+4:{s:'09:45',e:'10:00'},
+5:{s:'10:00',e:'11:15',b:[
+ '10:00 đến 10:10: chọn 1 dự án thật để làm trong buổi, ví dụ CV theo mô tả công việc PM hoặc kịch bản TikTok.',
+ 'Luyện viết prompt có đủ vai trò, bối cảnh, yêu cầu và định dạng đầu ra; thử 2 phiên bản và so sánh.',
+ 'Nhờ Claude đóng vai nhà tuyển dụng, hỏi 3 câu về Agile/Scrum rồi nhận xét câu trả lời của chị.',
+ 'Hoàn thành 1 sản phẩm cụ thể trong buổi và lưu lại.',
+ 'Cuối khối lưu các prompt hiệu quả vào thư viện prompt riêng để dùng lại.']},
+6:{s:'11:15',e:'11:45',b:[
+ 'Mở bảng theo dõi gồm: công ty, vị trí, link, ngày nộp, trạng thái; nộp 1 hồ sơ phù hợp.',
+ 'Tìm trên LinkedIn và các trang việc làm remote với từ khóa Project Manager, Scrum Master, Agile, IT; coi tiếng Trung, Nhật, Anh là lợi thế.',
+ 'Mỗi tuần dành 1 buổi nghiên cứu cách kiếm tiền online từ kênh (dạy hoặc dịch tiếng Trung, sản phẩm số, liên kết); điều kiện từng nền tảng cần đọc trên trang hỗ trợ chính thức của nó.']},
+7:{s:'11:45',e:'12:45'},
+8:{s:'12:45',e:'13:15'},
+9:{s:'13:15',e:'15:00',t:'Tiếng Nhật và tiếng Anh',b:[
+ '13:15 đến 14:15, tiếng Nhật: học hiragana rồi katakana, mỗi ngày vài hàng, viết tay và đọc to; xong bảng chữ thì học theo một giáo trình nhập môn, chọn 1 bộ và đi hết.',
+ 'Nghe audio của giáo trình 15 phút, nhại lại từng câu, học 15 từ mới và đặt 5 câu.',
+ '14:15 đến 15:00, tiếng Anh: xem 1 video về Scrum/Agile bằng tiếng Anh, ghi 5 cụm từ hay dùng trong họp dự án.',
+ 'Nói hoặc viết 5 câu trả lời phỏng vấn bằng tiếng Anh, nhờ Claude sửa lỗi và giải thích.',
+ 'Mỗi tuần kiểm tra nội dung và lịch thi trên trang chính thức jlpt.jp trước khi đặt mục tiêu thi N5 hoặc N4.']},
+10:{b:[
+ '15:00 đến 15:20: xem phân tích kênh, tìm video nào giữ người xem tốt nhất và chọn 1 dạng nội dung đang hiệu quả để làm tiếp.',
+ '15:20 đến 16:00: viết kịch bản 2 đến 3 video ngắn, mở đầu thật nhanh, mỗi video chỉ 1 ý, dùng từ vựng đã học lúc 07:30.',
+ '16:00 đến 16:40: quay một lượt các video cùng bối cảnh và ánh sáng để tiết kiệm thời gian.',
+ '16:40 đến 17:00: dựng, thêm phụ đề tiếng Trung kèm pinyin và nghĩa tiếng Việt, đặt tiêu đề và hashtag.',
+ 'Lưu video vào thư mục chờ đăng để đăng lúc 19:15 và các ngày sau.']},
+14:{s:'20:00',e:'21:15',b:[
+ '20:00 đến 20:10: xem lại sổ lỗi từ 07:30, ôn các từ và lỗi hay sai.',
+ '20:10 đến 20:35: luyện nghe một bài dài (tin tức, podcast) rồi tóm tắt miệng 3 câu.',
+ '20:35 đến 21:00: đọc một bài báo ngắn, gạch từ lạ, đoán nghĩa rồi mới tra.',
+ '21:00 đến 21:15: viết một đoạn 100 đến 150 chữ về chủ đề video sắp làm và đọc to lên.',
+ 'Nếu đang ôn thi, dùng đề mẫu và đại cương chính thức trên chinesetest.cn thay vì tài liệu không rõ nguồn.']},
+15:{s:'21:15',e:'21:45'}
+};
+const DOW=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Saigon'})).getDay();
+const IS_WE=DOW===0||DOW===6;
+const SLOTS=SLOTS_WD.map((x,i)=>IS_WE&&WE[i]?{...x,...WE[i]}:x);
 const WEEK=[
 ['Thứ Hai','Scrum Guide 2020: Sprint, Sprint Planning, Daily Scrum','Soạn mẫu Product Backlog cho một dự án giả định','Video mẹo từ vựng HSK cao cấp'],
 ['Thứ Ba','Sprint Review, Sprint Retrospective, 3 trách nhiệm (Developers, Product Owner, Scrum Master)','Mô phỏng buổi Retrospective và viết biên bản','Video ngữ pháp dễ nhầm'],
@@ -299,7 +350,7 @@ const WEEK=[
 ['Thứ Bảy','Làm backlog và roadmap cho chính kênh TikTok','Xuất sản phẩm: 1 trang portfolio dự án','Quay dự trữ video cho tuần sau'],
 ['Chủ Nhật','Nghỉ nhẹ, ôn lại sổ lỗi của cả tuần','Tổng kết tuần và chọn mục tiêu tuần sau','Xem analytics cả tuần, không quay']
 ];
-const GROUPS=[['s','Sáng','06:30 – 12:30'],['c','Chiều','12:30 – 18:15'],['t','Tối','18:15 – 22:30']];
+const GROUPS=[['s','Sáng'],['c','Chiều'],['t','Tối']];
 const $=s=>document.querySelector(s);
 const mins=h=>{const [a,b]=h.split(':').map(Number);return a*60+b};
 const dur=x=>{const m=mins(x.e)-mins(x.s),h=Math.floor(m/60),r=m%60;return h?(r?h+'h'+String(r).padStart(2,'0'):h+'h'):m+' phút'};
@@ -315,7 +366,8 @@ function render(){
   const n=nowMin();
   cur=SLOTS.findIndex(x=>mins(x.s)<=n&&n<mins(x.e));
   foc=cur>=0?cur:(()=>{const j=SLOTS.findIndex(x=>mins(x.s)>n);return j>=0?j:(n<mins(SLOTS[0].s)?0:SLOTS.length-1)})();
-  $('#groups').innerHTML=GROUPS.map(([p,name,rng])=>{
+  $('#groups').innerHTML=GROUPS.map(([p,name])=>{
+    const gs=SLOTS.filter(x=>x.p===p),rng=gs[0].s+' – '+gs[gs.length-1].e;
     const items=SLOTS.map((x,i)=>[x,i]).filter(([x])=>x.p===p).map(([x,i])=>`
     <details class="slot k${x.k}${done[i]?' done':''}${i===foc?' cur':''}" data-i="${i}"${i===foc?' open':''}>
       <summary>
@@ -330,8 +382,8 @@ function render(){
       </div>
     </details>`).join('');
     return `<section class="group" data-p="${p}"><h2>${name}<span>${rng}</span></h2><div class="list">${items}</div></section>`}).join('');
-  $('#week').innerHTML=WEEK.map(d=>`<div class="day"><h3>${d[0]}</h3><dl>
-    <dt>08:30</dt><dd>${d[1]}</dd><dt>10:15</dt><dd>${d[2]}</dd><dt>15:00</dt><dd>${d[3]}</dd></dl></div>`).join('');
+  $('#week').innerHTML=WEEK.map((d,k)=>{const we=k>=5,t=i=>(we&&WE[i]&&WE[i].s)||SLOTS_WD[i].s;return `<div class="day"><h3>${d[0]}${(k+1)%7===DOW?' (hôm nay)':''}</h3><dl>
+    <dt>${t(3)}</dt><dd>${d[1]}</dd><dt>${t(5)}</dt><dd>${d[2]}</dd><dt>${t(10)}</dt><dd>${d[3]}</dd></dl></div>`}).join('');
   $('#nowTxt').textContent=(cur>=0?'Bây giờ: ':'Tiếp theo: ')+SLOTS[foc].t;
   document.body.classList.toggle('focus',focusOn);
   $('#focusBtn').textContent=focusOn?'Hiện rõ tất cả':'Chỉ tô khung hiện tại';
